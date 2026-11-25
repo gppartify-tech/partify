@@ -6,7 +6,7 @@ import { ProductImage, StoreBadge } from "../components/ui";
 import { CATEGORIES, CONDITIONS, formatPrice, timeAgo, timeAgoShort } from "../lib/format";
 import { useApi } from "../lib/useApi";
 
-const QUICK = ["RTX 5060", "RX 9070 XT", "Ryzen 7 7800X3D", "DDR5 32GB", "NVMe 1TB", "B650"];
+const QUICK = ["Processor", "Graphics Card", "Motherboard", "DDR5", "NVMe 1TB", "Power Supply"];
 const PRESETS = [
   { budget: 900, use: "gaming", resolution: "1080p", title: "1080p gaming", text: "Smooth esports & AAA at 1080p" },
   { budget: 1500, use: "gaming", resolution: "1440p", title: "1440p gaming", text: "High settings, high refresh" },
@@ -21,13 +21,16 @@ function Hero() {
   const { data: cats } = useApi("/categories");
   const tracked = (cats || []).reduce((n, c) => n + c.product_count, 0);
   const lastUpdate = (stores || []).map((s) => s.prices_updated_at).filter(Boolean).sort().pop();
+  // "Comparing A, B & C" - built from the stores in the database, so it is always accurate
+  const names = (stores || []).map((s) => s.name);
+  const storeList = names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0];
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
       <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
       <div className="container-page relative py-14 sm:py-20">
         <div className="max-w-3xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-100">
-            <Radar className="h-3.5 w-3.5" /> Comparing iGeek, CompuJordan & Oriental Store
+            <Radar className="h-3.5 w-3.5" /> {storeList ? `Comparing ${storeList}` : "Comparing PC stores in Jordan"}
           </span>
           <h1 className="mt-5 text-4xl font-extrabold tracking-tight sm:text-5xl">
             The best price for every PC part in Jordan
@@ -49,7 +52,7 @@ function Hero() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="w-full rounded-2xl border-0 bg-white dark:bg-slate-900 py-3.5 pl-12 pr-4 text-slate-900 dark:text-slate-50 shadow-lg placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-400/40"
-                placeholder="Search a part, e.g. RTX 5070 Ti"
+                placeholder="Search a part, e.g. graphics card"
                 aria-label="Search parts"
               />
             </div>
@@ -139,7 +142,7 @@ function Deals() {
 
 function Features() {
   const items = [
-    { icon: Search, title: "Compare 3 stores", text: "One page per part with every store's price and stock, side by side." },
+    { icon: Search, title: "Compare stores", text: "One page per part with every store's price and stock, side by side." },
     { icon: Bell, title: "Price alerts", text: "Add parts to your wishlist with a target price - we notify you when it's reached." },
     { icon: Wrench, title: "PC builder", text: "Pick parts with live compatibility checks, or auto-build a PC for your budget." },
     { icon: ShoppingBag, title: "Used marketplace", text: "Sell the parts you upgrade from, or find a bargain from other builders." },

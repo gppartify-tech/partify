@@ -29,7 +29,7 @@ function ProductLink({ category, product, onChange }) {
     <div>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input className="input pl-9" placeholder="Type the model, e.g. RTX 3060" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="input pl-9" placeholder="Type the part name, e.g. graphics card" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       {data?.items?.length > 0 && (
         <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -113,7 +113,7 @@ export default function ListingForm() {
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Good photos and an honest description sell faster.</p>
       <form onSubmit={submit} className="card mt-6 space-y-5 p-6">
         <Field label="Title">
-          <input className="input" required minLength={5} maxLength={150} value={form.title} onChange={set("title")} placeholder="e.g. MSI RTX 3060 Ventus 12GB - 1 year old" />
+          <input className="input" required minLength={5} maxLength={150} value={form.title} onChange={set("title")} placeholder="e.g. Graphics card 8GB - 1 year old, with box" />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Category">

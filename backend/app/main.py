@@ -21,8 +21,8 @@ app = FastAPI(
     title=f"{settings.app_name} API",
     version="1.0.0",
     description=(
-        "Price comparison for PC parts in Jordan (iGeek, CompuJordan, Oriental Store), "
-        "wishlist price alerts, a PC builder and a used-parts marketplace - all served from PostgreSQL."
+        "Price comparison for PC parts in Jordan, wishlist price alerts, a PC builder and a used-parts "
+        "marketplace - all served from PostgreSQL. The bundled data is hand-written test data."
     ),
 )
 

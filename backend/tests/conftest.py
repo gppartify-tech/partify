@@ -55,59 +55,61 @@ def client():
     return TestClient(app)
 
 
+# The tests use their own small catalog (not the bundled test_catalog.json), so that editing
+# the demo data never breaks them.
 STORES = [
-    ("igeek", "iGeek Megastore", "https://igeekjo.com", "#2a78d6"),
-    ("compujordan", "CompuJordan", "https://compujordan.com", "#eb6834"),
-    ("oriental", "Oriental Store", "https://os-jo.com", "#1baf7a"),
+    ("store-a", "Test Store A", "https://example.com", "#2a78d6"),
+    ("store-b", "Test Store B", "https://example.com", "#eb6834"),
+    ("store-c", "Test Store C", "https://example.com", "#1baf7a"),
 ]
 
 # A small but complete catalog: enough parts to build a PC.
 # (category, brand, name, specs, offers) - each offer: (store, sku, price, in_stock, store's "was" price)
 CATALOG = [
-    ("cpu", "AMD", "AMD Ryzen 5 7600",
+    ("cpu", "AMD", "Test Processor 6-Core (AM5)",
      {"socket": "AM5", "cores": 6, "threads": 12, "tdp_w": 88, "igpu": True, "gaming_score": 71, "multi_score": 33},
-     [("igeek", "c1", 149, True, None), ("compujordan", "100", 145, True, None)]),
-    ("cpu", "AMD", "AMD Ryzen 7 7800X3D",
+     [("store-a", "c1", 149, True, None), ("store-b", "c1b", 145, True, None)]),
+    ("cpu", "AMD", "Test Processor 8-Core Plus (AM5)",
      {"socket": "AM5", "cores": 8, "threads": 16, "tdp_w": 120, "igpu": True, "gaming_score": 90, "multi_score": 42},
-     [("igeek", "c2", 299, True, None)]),
-    ("cpu", "Intel", "Intel Core i5-14400F",
+     [("store-a", "c2", 299, True, None)]),
+    ("cpu", "Intel", "Test Processor 10-Core (LGA1700)",
      {"socket": "LGA1700", "cores": 10, "threads": 16, "tdp_w": 148, "igpu": False, "gaming_score": 68, "multi_score": 40},
-     [("igeek", "c3", 139, True, None)]),
-    ("gpu", "ASUS", "ASUS Dual GeForce RTX 5060 8GB GDDR7",
-     {"chip": "RTX 5060", "vram_gb": 8, "tdp_w": 145, "score": 28, "chip_maker": "nvidia"},
-     [("igeek", "g1", 469, True, None), ("compujordan", "101", 479, False, None)]),
-    ("gpu", "Sapphire", "Sapphire PULSE Radeon RX 9070 XT 16GB",
-     {"chip": "RX 9070 XT", "vram_gb": 16, "tdp_w": 304, "score": 55, "chip_maker": "amd"},
-     [("igeek", "g2", 899, True, 999)]),
-    ("motherboard", "MSI", "MSI B650M GAMING PLUS WIFI",
+     [("store-a", "c3", 139, True, None)]),
+    ("gpu", "TestBrand", "Test Graphics Card 8GB",
+     {"chip": "Test Chip 8", "vram_gb": 8, "tdp_w": 145, "score": 28, "chip_maker": "nvidia"},
+     [("store-a", "g1", 469, True, None), ("store-b", "g1b", 479, False, None)]),
+    ("gpu", "TestBrand", "Test Graphics Card 16GB",
+     {"chip": "Test Chip 16", "vram_gb": 16, "tdp_w": 304, "score": 55, "chip_maker": "amd"},
+     [("store-a", "g2", 899, True, 999)]),
+    ("motherboard", "TestBrand", "Test Motherboard AM5 DDR5",
      {"socket": "AM5", "chipset": "B650", "memory_type": "DDR5", "form_factor": "Micro-ATX", "wifi": True},
-     [("igeek", "m1", 129, True, None)]),
-    ("motherboard", "Gigabyte", "Gigabyte B760M DS3H DDR4",
+     [("store-a", "m1", 129, True, None)]),
+    ("motherboard", "TestBrand", "Test Motherboard LGA1700 DDR4",
      {"socket": "LGA1700", "chipset": "B760", "memory_type": "DDR4", "form_factor": "Micro-ATX", "wifi": False},
-     [("igeek", "m2", 99, True, None)]),
-    ("ram", "Corsair", "Corsair Vengeance 32GB (2x16GB) DDR5 6000",
+     [("store-a", "m2", 99, True, None)]),
+    ("ram", "TestBrand", "Test Memory 32GB (2x16GB) DDR5-6000",
      {"memory_type": "DDR5", "capacity_gb": 32, "modules": 2, "speed_mhz": 6000},
-     [("igeek", "r1", 189, True, None)]),
-    ("ram", "Kingston", "Kingston FURY Beast 16GB (2x8GB) DDR4 3200",
+     [("store-a", "r1", 189, True, None)]),
+    ("ram", "TestBrand", "Test Memory 16GB (2x8GB) DDR4-3200",
      {"memory_type": "DDR4", "capacity_gb": 16, "modules": 2, "speed_mhz": 3200},
-     [("igeek", "r2", 79, True, None)]),
-    ("storage", "Kingston", "Kingston NV3 1TB NVMe SSD",
+     [("store-a", "r2", 79, True, None)]),
+    ("storage", "TestBrand", "Test NVMe SSD 1TB",
      {"storage_type": "NVMe SSD", "capacity_gb": 1000},
-     [("igeek", "s1", 89, True, None), ("compujordan", "102", 85, True, None)]),
-    ("psu", "Corsair", "Corsair RM750e 750W",
+     [("store-a", "s1", 89, True, None), ("store-b", "s1b", 85, True, None)]),
+    ("psu", "TestBrand", "Test Power Supply 750W",
      {"wattage": 750, "efficiency": "80+ Gold", "modular": "Full", "form_factor": "ATX"},
-     [("igeek", "p1", 99, True, None)]),
-    ("case", "Lian Li", "Lian Li LANCOOL 216",
+     [("store-a", "p1", 99, True, None)]),
+    ("case", "TestBrand", "Test Mid-Tower Case",
      {"form_factor": "Mid Tower", "supports": ["ATX", "Micro-ATX", "Mini-ITX"]},
-     [("igeek", "k1", 85, True, None)]),
-    ("cooler", "DeepCool", "DeepCool AK400",
+     [("store-a", "k1", 85, True, None)]),
+    ("cooler", "TestBrand", "Test CPU Air Cooler",
      {"cooler_type": "Air", "tdp_rating_w": 220},
-     [("igeek", "f1", 29, True, None)]),
+     [("store-a", "f1", 29, True, None)]),
 ]
 
 
 def add_catalog(db, catalog=CATALOG):
-    """Insert stores, products, offers and one price-history point per offer, like the real data."""
+    """Insert stores, products, offers and one price-history point per offer."""
     now = datetime.now(UTC) - timedelta(hours=1)
     stores = {}
     for slug, name, url, color in STORES:
@@ -123,7 +125,7 @@ def add_catalog(db, catalog=CATALOG):
         for store, sku, price, in_stock, old_price in offers:
             offer = Offer(
                 product_id=product.id, store_id=stores[store].id, store_sku=sku, category=category,
-                url=f"https://example.com/p/{sku}", title=name, price=Decimal(price), in_stock=in_stock,
+                url=f"https://example.com/?sku={sku}", title=name, price=Decimal(price), in_stock=in_stock,
                 old_price=Decimal(old_price) if old_price else None, price_changed_at=now,
                 first_seen_at=now, last_seen_at=now,
             )

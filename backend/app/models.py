@@ -2,8 +2,8 @@
 
 Entity overview
 ---------------
-Store         one of the three PC stores whose prices we compare
-Product       a canonical part (e.g. "AMD Ryzen 7 7800X3D"), shared by all stores
+Store         a PC store whose prices we compare
+Product       a canonical part (e.g. "Test Graphics Card 8GB"), shared by all stores
 Offer         one store's listing of a product: price, stock, URL
 PriceHistory  every recorded price/stock change of an offer (drives the charts)
 User          an account

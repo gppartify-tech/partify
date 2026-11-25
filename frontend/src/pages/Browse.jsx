@@ -69,6 +69,8 @@ export default function Browse() {
   };
   const { data, loading, error } = useApi("/products", query);
   const { data: facets } = useApi(category ? "/products/facets" : null, { category });
+  const { data: storeList } = useApi("/stores");
+  const storeNames = Object.fromEntries((storeList || []).map((s) => [s.slug, s.name]));
 
   const update = (changes) => {
     const next = new URLSearchParams(params);
@@ -111,7 +113,7 @@ export default function Browse() {
       {facets && (
         <>
           <CheckList title="Store" values={facets.stores} selected={stores} onToggle={(v) => toggle("store", v)}
-            format={(v) => ({ igeek: "iGeek Megastore", compujordan: "CompuJordan", oriental: "Oriental Store" })[v] || v} />
+            format={(v) => storeNames[v] || v} />
           {Object.entries(facets.specs).map(([key, values]) => (
             <CheckList key={key} title={specLabel(key)} values={values} selected={params.getAll(`spec_${key}`)}
               onToggle={(v) => toggle(`spec_${key}`, v)}
@@ -136,7 +138,7 @@ export default function Browse() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {data ? `${data.total.toLocaleString()} products` : " "}
-            {meta && " · lowest price across iGeek, CompuJordan and Oriental Store"}
+            {meta && " · lowest price across all stores"}
           </p>
         </div>
         <div className="flex items-center gap-2">

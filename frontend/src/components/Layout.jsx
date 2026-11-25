@@ -34,7 +34,7 @@ function SearchBox({ className = "", onDone }) {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search parts, e.g. RTX 5070 or Ryzen 7"
+        placeholder="Search parts, e.g. graphics card or DDR5"
         aria-label="Search parts"
         className="w-full rounded-xl border border-slate-700 bg-slate-800 py-2 pl-9 pr-3 text-sm text-white placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
       />
@@ -257,8 +257,8 @@ function Footer() {
         <div className="text-sm text-slate-500 dark:text-slate-400">
           <h3 className="font-semibold text-slate-900 dark:text-slate-50">About the data</h3>
           <p className="mt-3">
-            Prices and stock come from each store's public product pages and are kept in our database, with the date
-            they were last updated. Always confirm the price on the store's website before buying.
+            This demo runs on hand-written test data: the stores, parts and prices are made up and are not real store
+            listings. They are kept in our database, with the date each store's prices were last updated.
           </p>
         </div>
       </div>

@@ -1,16 +1,15 @@
-"""Filling the database: the product catalog, the admin account and optional demo data.
+"""Filling the database: the test catalog, the admin account and optional demo users.
 
-The catalog (app/data/catalog.json.gz) holds the stores, products, store offers and price
-history - real prices from iGeek Megastore, CompuJordan and Oriental Store collected on
-20 Nov 2026. It is loaded once into an empty database by `python -m app.cli init`, so the
-website has data the moment it starts, with no internet connection needed.
+The catalog (app/data/test_catalog.json) is HAND-WRITTEN TEST DATA: made-up stores, parts,
+prices and price history, not copied from any real store. It is loaded once into an empty
+database by `python -m app.cli init`, so the website has something to show the moment it starts.
+Edit that file to change the data, then reset the database (docker compose down -v).
 """
 from __future__ import annotations
 
-import gzip
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -23,7 +22,7 @@ from app.security import hash_password
 from app.services.catalog import refresh_products
 
 log = logging.getLogger(__name__)
-CATALOG_PATH = Path(__file__).parent / "data" / "catalog.json.gz"
+CATALOG_PATH = Path(__file__).parent / "data" / "test_catalog.json"
 
 
 def create_admin(db: Session, email: str, password: str, username: str = "admin") -> User:
@@ -38,83 +37,100 @@ def create_admin(db: Session, email: str, password: str, username: str = "admin"
     return user
 
 
-def _dt(value: str | None) -> datetime | None:
-    return datetime.fromisoformat(value) if value else None
-
-
-def _dec(value: str | None) -> Decimal | None:
-    return Decimal(value) if value else None
+def _money(value) -> Decimal | None:
+    return None if value is None else Decimal(str(value))
 
 
 def import_catalog(db: Session, path: Path = CATALOG_PATH) -> dict:
-    """Load stores, products, offers and price history into an EMPTY catalog.
-    Does nothing when products already exist, so it is safe to run on every start."""
+    """Load stores, products, offers and price history from the JSON file into an EMPTY catalog.
+    Does nothing when products already exist, so it is safe to run on every start.
+
+    In the file every offer has a `history` list (oldest first, `days_ago` counted back from now).
+    The LAST entry is the offer's current price and stock; the entry before it gives the previous
+    price. An optional `old_price` is the store's own "was" price (a store sale)."""
     if db.scalar(select(func.count(Product.id))):
         return {"skipped": "catalog is not empty"}
-    with gzip.open(path, "rt", encoding="utf-8") as fh:
-        data = json.load(fh)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    now = datetime.now(UTC)
 
-    stores = {s.slug: s for s in db.scalars(select(Store))}
+    stores: dict[str, Store] = {}
     for s in data["stores"]:
-        store = stores.get(s["slug"])
-        if store is None:
-            store = stores[s["slug"]] = Store(slug=s["slug"])
-            db.add(store)
-        store.name, store.base_url, store.color = s["name"], s["base_url"], s["color"]
-        store.prices_updated_at = _dt(s["prices_updated_at"])
-    db.flush()
-
-    # The ids in the file only link its rows together; the database assigns its own ids.
-    products = {
-        p["id"]: Product(
-            category=p["category"], brand=p["brand"], name=p["name"], specs=p["specs"],
-            image_url=p["image_url"], lowest_price_ever=_dec(p["lowest_price_ever"]),
-            created_at=_dt(p["created_at"]),
+        stores[s["slug"]] = Store(
+            slug=s["slug"], name=s["name"], base_url=s["base_url"], color=s.get("color"), prices_updated_at=now
         )
-        for p in data["products"]
-    }
-    db.add_all(products.values())
-    db.flush()  # one batched INSERT; afterwards every product has its database id
+    db.add_all(stores.values())
+    db.flush()
 
-    offers = {
-        o["id"]: Offer(
-            product_id=products[o["product_id"]].id, store_id=stores[o["store"]].id,
-            store_sku=o["store_sku"], url=o["url"], title=o["title"], image_url=o["image_url"],
-            category=o["category"], price=_dec(o["price"]), old_price=_dec(o["old_price"]),
-            previous_price=_dec(o["previous_price"]), price_changed_at=_dt(o["price_changed_at"]),
-            in_stock=o["in_stock"], is_active=o["is_active"],
-            first_seen_at=_dt(o["first_seen_at"]), last_seen_at=_dt(o["last_seen_at"]),
+    n_offers = n_points = 0
+    product_ids: set[int] = set()
+    for p in data["products"]:
+        product = Product(
+            category=p["category"], brand=p.get("brand"), name=p["name"], specs=p.get("specs", {}),
+            image_url=p.get("image_url"),
         )
-        for o in data["offers"]
-    }
-    db.add_all(offers.values())
-    db.flush()
+        db.add(product)
+        db.flush()
+        product_ids.add(product.id)
 
-    db.add_all(
-        PriceHistory(offer_id=offers[offer_id].id, price=_dec(price), in_stock=in_stock, recorded_at=_dt(at))
-        for offer_id, price, in_stock, at in data["history"]
-    )
+        lowest: Decimal | None = None  # lowest in-stock price ever recorded for this product
+        for o in p["offers"]:
+            store = stores.get(o["store"])
+            if store is None:
+                raise ValueError(f"{p['name']}: offer for unknown store {o['store']!r}")
+            if not o.get("history"):
+                raise ValueError(f"{p['name']} / {o['store']}: an offer needs at least one history entry")
+            points = sorted(o["history"], key=lambda h: -h["days_ago"])  # oldest first
+            times = [now - timedelta(days=h["days_ago"]) for h in points]
+            prices = [_money(h.get("price")) for h in points]
+            stock = [bool(h.get("in_stock", True)) for h in points]
+
+            # when did the current price start, and what was the price before it?
+            changed_at, previous = times[0], None
+            for i in range(1, len(points)):
+                if prices[i] != prices[i - 1]:
+                    changed_at, previous = times[i], prices[i - 1]
+
+            offer = Offer(
+                product_id=product.id, store_id=store.id, store_sku=o["sku"],
+                url=o.get("url") or f"{store.base_url}/?sku={o['sku']}", title=o.get("title", p["name"]),
+                category=p["category"], price=prices[-1], old_price=_money(o.get("old_price")),
+                previous_price=previous, price_changed_at=changed_at, in_stock=stock[-1], is_active=True,
+                first_seen_at=times[0], last_seen_at=now,
+            )
+            db.add(offer)
+            db.flush()
+            db.add_all(
+                PriceHistory(offer_id=offer.id, price=price, in_stock=in_stock, recorded_at=at)
+                for price, in_stock, at in zip(prices, stock, times, strict=True)
+            )
+            n_offers += 1
+            n_points += len(points)
+            in_stock_prices = [pr for pr, st in zip(prices, stock, strict=True) if st and pr is not None]
+            if in_stock_prices:
+                lowest = min(in_stock_prices + ([lowest] if lowest is not None else []))
+        product.lowest_price_ever = lowest
+
     db.flush()
-    refresh_products(db, {p.id for p in products.values()})  # best price, best store, stock, offer count
+    refresh_products(db, product_ids)  # best price, best store, stock, offer count
     db.flush()
-    return {"stores": len(data["stores"]), "products": len(products), "offers": len(offers),
-            "price_points": len(data["history"])}
+    return {"stores": len(stores), "products": len(product_ids), "offers": n_offers, "price_points": n_points}
 
 
 DEMO_PASSWORD = "demo12345"
 DEMO_USERS = [
-    ("sami", "Sami H.", "Amman", "Upgrading to AM5, selling my old parts. Everything tested, original boxes.", [
-        ("MSI RTX 3060 Ventus 2X 12GB", "gpu", "good", 165, "rtx 3060", "Used for 2 years for gaming only, never mined. Runs cool, no coil whine. Original box included."),
-        ("Ryzen 5 5600 + B550M motherboard combo", "other", "good", 120, None, "AMD Ryzen 5 5600 with an MSI B550M PRO-VDH board. BIOS updated, perfect for a budget AM4 build."),
-        ("Corsair Vengeance LPX 16GB (2x8) DDR4 3200", "ram", "good", 25, None, "Two sticks, XMP stable at 3200 MHz."),
+    ("sami", "Sami H.", "Amman", "Upgrading my PC and selling my old parts. Everything tested, original boxes.", [
+        ("Used Test Graphics Card 8GB - works great", "gpu", "good", 190, "Test Chip 8",
+         "Used for 2 years, never overclocked. Runs cool and quiet. Original box included."),
+        ("Test Memory 16GB (2x8GB) DDR4-3200 kit", "ram", "good", 25, None, "Two sticks, tested with XMP at 3200 MHz."),
     ]),
-    ("lina", "Lina K.", "Irbid", "Content creator - I sell the parts I replace.", [
-        ("Gaming PC: i5-12400F + RTX 3060 Ti, 16GB RAM, 1TB NVMe", "pc", "good", 520, None, "Complete tower, Windows activated, plays everything at 1080p high. Can show it running before you buy."),
-        ("Samsung 970 EVO Plus 1TB NVMe", "storage", "like_new", 45, None, "95% health, moved to a 2TB drive."),
+    ("lina", "Lina K.", "Irbid", "I sell the parts I replace.", [
+        ("Complete test PC: 6-core CPU, 8GB graphics card, 1TB NVMe", "pc", "good", 520, None,
+         "Complete tower, Windows installed, plays recent games at 1080p. Can show it running before you buy."),
+        ("Test NVMe SSD 1TB", "storage", "like_new", 45, None, "95% health, moved to a bigger drive."),
     ]),
     ("omar", "Omar N.", "Zarqa", "PC builder and tinkerer.", [
-        ("ASUS TUF RTX 4070 Super OC 12GB - warranty until 2027", "gpu", "like_new", 520, "rtx 4070 super", "Bought from a local store, invoice included. Selling because I moved to a 5080."),
-        ("Cooler Master MWE 650 Bronze V2", "psu", "fair", 30, None, "Works fine, fan slightly louder than new."),
+        ("Test Graphics Card 16GB - like new, with invoice", "gpu", "like_new", 520, "Test Chip 16",
+         "Bought from a local store, invoice included. Selling because I upgraded."),
     ]),
 ]
 

@@ -1,12 +1,14 @@
 # Partify 🇯🇴 — PC part price comparison for Jordan
 
-Partify compares PC-part prices across three Jordanian stores, shows the price history of every
-part, lets users track parts with a target price, plan a compatible build, and sell their own
-used parts.
+Partify compares PC-part prices across stores in Jordan, shows the price history of every part,
+lets users track parts with a target price, plan a compatible build, and sell their own used parts.
 
 This version is a classic **three-tier web application**: a React **front-end**, a FastAPI
 **back-end** and a PostgreSQL **database**. Every page reads from and writes to the database
 through the back-end's REST API. There are no price scrapers, background jobs or AI chat.
+
+> **The data is test data.** The database starts with a few hand-written test stores, parts and
+> prices (see [The test data](#the-test-data)). Nothing in it comes from a real store.
 
 ![Home page](docs/screenshots/home.png)
 
@@ -17,11 +19,11 @@ through the back-end's REST API. There are no price scrapers, background jobs or
 
 ## Features
 
-- **Price comparison** – one page per part with every store's price, stock status and a link to buy.
-  2,300+ parts in 8 categories (CPU, GPU, motherboard, RAM, storage, PSU, case, cooler), with filters
+- **Price comparison** – one page per part with every store's price, stock status and a link to the store.
+  8 categories (CPU, GPU, motherboard, RAM, storage, PSU, case, cooler), with filters
   (socket, GPU chip, VRAM, DDR type, wattage…), sorting and search.
 - **Price history** – every recorded price is stored; each product shows a per-store chart (and a table view).
-- **Deals** – the biggest discounts on in-stock parts (the stores' own sale prices).
+- **Deals** – the biggest discounts on in-stock parts (a store's sale price or a recent price drop).
 - **Wishlist & price alerts** – track a part with an optional target price. When the best in-stock
   price is at or below the target, the user gets an in-app notification (the bell icon).
 - **PC builder** – pick parts with live compatibility checks (socket, DDR4/DDR5, case size, PSU
@@ -51,7 +53,7 @@ flowchart LR
 | Database | PostgreSQL 16 (JSONB for part specs) | `docker-compose.yml` (`db` service) |
 
 **How one page works – opening a product:**
-1. React Router shows `ProductPage.jsx`, which calls `GET /api/products/123` and `GET /api/products/123/history`.
+1. React Router shows `ProductPage.jsx`, which calls `GET /api/products/3` and `GET /api/products/3/history`.
 2. nginx forwards every `/api/...` request to FastAPI.
 3. FastAPI (`backend/app/routers/catalog.py`) queries PostgreSQL with SQLAlchemy and returns JSON.
 4. React draws the price table and the price chart from that JSON.
@@ -74,10 +76,21 @@ docker compose up --build
 | http://localhost:8000/docs | interactive API documentation (try every endpoint) |
 | localhost:5433 | the database, for pgAdmin / DBeaver (user, password and database: `partify`) |
 
-On first start the back-end creates the tables and fills the empty database with the product
-catalog (3 stores, 2,387 products, 3,015 store offers), so the site works immediately – even offline.
-The data stays in a Docker volume, so it survives restarts. To start again from an empty database:
-`docker compose down -v`.
+On first start the back-end creates the tables and fills the empty database with the hand-written
+test data: 3 test stores and 12 test parts (1–2 per category) with their prices and price history.
+With `SEED_DEMO_USERS=true` it also creates 3 demo users with 5 marketplace listings.
+The parts have no pictures, so the site shows a category icon instead.
+
+The data stays in a Docker volume, so it survives restarts. **To wipe the database and start again
+from the test data:**
+
+```bash
+docker compose down -v
+```
+
+then `docker compose up --build` again. (The start-up seed only fills an *empty* database, so a
+database you already have is never overwritten – reset it with `down -v` to load changes you made
+to the test data.)
 
 Admin account: the `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` (the admin page is `/admin`).
 Demo accounts (when `SEED_DEMO_USERS=true`): `sami`, `lina`, `omar` – password `demo12345`.
@@ -102,7 +115,7 @@ cd backend
 python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp ../.env.example .env                               # defaults point at localhost
-python -m app.cli init                                # create tables + load the catalog
+python -m app.cli init                                # create tables + load the test data
 uvicorn app.main:app --reload                         # http://localhost:8000/docs
 ```
 
@@ -208,8 +221,8 @@ erDiagram
 
 | Table | What one row is |
 |---|---|
-| `stores` | one of the three stores (iGeek Megastore, CompuJordan, Oriental Store) |
-| `products` | a part, e.g. "AMD Ryzen 7 7800X3D", with its specs (JSONB) and its best price across stores |
+| `stores` | a store whose prices are compared (the demo has three made-up ones: Test Store A, B and C) |
+| `products` | a part, e.g. "Test Graphics Card 8GB", with its specs (JSONB) and its best price across stores |
 | `offers` | one store's listing of a product: price, stock, link |
 | `price_history` | a recorded price/stock of an offer at a moment in time (the chart) |
 | `users` | an account (password stored as an Argon2 hash) |
@@ -218,9 +231,7 @@ erDiagram
 | `listings`, `listing_images` | marketplace ads and their photos |
 
 The table structure is defined in `backend/app/models.py` and created by the Alembic migration in
-`backend/alembic/versions/`. The catalog data comes from `backend/app/data/catalog.json.gz`: real
-prices from the three stores' public product pages, collected on 20 Nov 2026. Prices in this version
-do not change by themselves; the site shows when each store's prices were last updated.
+`backend/alembic/versions/`.
 
 Looking inside the database:
 
@@ -235,6 +246,35 @@ SELECT name, best_price FROM products ORDER BY best_price DESC LIMIT 5;
 ```
 
 Making a backup: `docker compose exec -T db pg_dump -U partify partify > backup.sql`
+
+### The test data
+
+The catalog comes from one hand-written file, `backend/app/data/test_catalog.json`: the stores, parts,
+prices, price history and links in it are all made up. `python -m app.cli init` loads it into an empty
+database. To add a part, add an entry to its `products` list:
+
+```json
+{
+  "category": "gpu", "brand": "TestBrand", "name": "Test Graphics Card 8GB",
+  "specs": {"chip": "Test Chip 8", "chip_maker": "nvidia", "vram_gb": 8, "tdp_w": 145, "score": 28},
+  "offers": [
+    {"store": "test-store-a", "sku": "A-GPU-8G", "old_price": 299, "history": [
+      {"days_ago": 50, "price": 299, "in_stock": true},
+      {"days_ago": 4, "price": 279, "in_stock": true}]}
+  ]
+}
+```
+
+- `category` is one of `cpu`, `gpu`, `motherboard`, `ram`, `storage`, `psu`, `case`, `cooler`.
+- Each offer is one store's listing of the part. Its **last** `history` entry is the current price and
+  stock; the earlier entries are the price chart. `days_ago` counts back from the moment the data is loaded.
+- `old_price` (optional) is the store's own "was" price; it makes the part show up under "Best deals".
+- `specs` holds the values the filters, the compatibility checks and the build recommender use
+  (`socket`, `memory_type`, `wattage`, `tdp_w`, …) – copy the keys from the entries already in the file.
+
+Then reset the database (`docker compose down -v`) so the file is loaded again. You can also add rows
+directly with SQL; the front-end and the API do not care where the rows come from, so real store data
+can be loaded into the same tables later.
 
 ## API overview
 Full interactive docs at `/docs` (use **Authorize** to log in).
@@ -281,12 +321,13 @@ GPS data is removed), saved under `uploads/` and served at `/uploads/...`.
 ```bash
 cd backend
 createdb -U partify partify_test       # once (or set TEST_DATABASE_URL)
-pytest                                 # 10 tests
+pytest                                 # 12 tests
 ```
 
 They cover the HTTP API (auth, catalog and filters, best price across stores, deals, wishlist and
-notifications, marketplace with image uploads, profile and password, builder, admin) and loading the
-real catalog file into PostgreSQL.
+notifications, marketplace with image uploads, profile and password, builder, admin) and the bundled
+test data: it loads into PostgreSQL, the demo listings link to catalog parts, and the four one-click
+builds on the home page all produce a compatible PC within budget.
 
 ## Project structure
 
@@ -296,10 +337,10 @@ backend/
     main.py              FastAPI app        models.py      database tables
     config.py            settings (.env)    schemas.py     API request/response shapes
     database.py          DB connection      security.py    passwords + JWT login
-    cli.py               command line       seed.py        loads the catalog, admin, demo data
+    cli.py               command line       seed.py        loads the test data, admin, demo users
     routers/             HTTP endpoints (auth, users, catalog, wishlist, notifications, marketplace, builds, admin)
     services/            catalog queries, price alerts, recommender, compatibility, uploads
-    data/                catalog.json.gz (stores, products, offers, price history)
+    data/                test_catalog.json (hand-written test stores, parts, prices, price history)
   alembic/               database migrations
   tests/                 pytest suite
 frontend/

@@ -1,0 +1,150 @@
+{
+  "about": "Hand-written TEST data. Nothing in this file comes from a real store: the stores, products, prices, price history and links are all made up for development and demos. To change what the site shows, edit this file and reset the database (docker compose down -v) so it is loaded again. Each offer's LAST history entry is its current price and stock; days_ago is counted back from the moment the data is loaded.",
+  "stores": [
+    {"slug": "test-store-a", "name": "Test Store A", "base_url": "https://example.com", "color": "#2a78d6"},
+    {"slug": "test-store-b", "name": "Test Store B", "base_url": "https://example.com", "color": "#eb6834"},
+    {"slug": "test-store-c", "name": "Test Store C", "base_url": "https://example.com", "color": "#1baf7a"}
+  ],
+  "products": [
+    {
+      "category": "cpu", "brand": "AMD", "name": "Test Processor 6-Core (AM5)",
+      "specs": {"model": "Test Processor 6-Core", "socket": "AM5", "cores": 6, "threads": 12, "boost_ghz": 5.1, "tdp_w": 88, "igpu": true, "gaming_score": 71, "multi_score": 33, "packaging": "Box"},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-CPU-6C", "old_price": 149, "history": [
+          {"days_ago": 45, "price": 149, "in_stock": true},
+          {"days_ago": 20, "price": 139, "in_stock": true},
+          {"days_ago": 3, "price": 129, "in_stock": true}]},
+        {"store": "test-store-b", "sku": "B-CPU-6C", "history": [
+          {"days_ago": 45, "price": 145, "in_stock": true},
+          {"days_ago": 10, "price": 135, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-CPU-6C", "history": [
+          {"days_ago": 30, "price": 139, "in_stock": true},
+          {"days_ago": 7, "price": 139, "in_stock": false}]}
+      ]
+    },
+    {
+      "category": "cpu", "brand": "Intel", "name": "Test Processor 8-Core (LGA1700)",
+      "specs": {"model": "Test Processor 8-Core", "socket": "LGA1700", "cores": 8, "threads": 16, "boost_ghz": 4.9, "tdp_w": 125, "igpu": true, "gaming_score": 66, "multi_score": 38, "packaging": "Box"},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-CPU-8C", "history": [
+          {"days_ago": 60, "price": 199, "in_stock": true},
+          {"days_ago": 5, "price": 189, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-CPU-8C", "history": [
+          {"days_ago": 60, "price": 185, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "gpu", "brand": "TestBrand", "name": "Test Graphics Card 8GB",
+      "specs": {"chip": "Test Chip 8", "chip_maker": "nvidia", "vram_gb": 8, "tdp_w": 145, "score": 28},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-GPU-8G", "history": [
+          {"days_ago": 50, "price": 299, "in_stock": true},
+          {"days_ago": 14, "price": 289, "in_stock": true},
+          {"days_ago": 4, "price": 279, "in_stock": true}]},
+        {"store": "test-store-b", "sku": "B-GPU-8G", "history": [
+          {"days_ago": 50, "price": 285, "in_stock": true},
+          {"days_ago": 28, "price": 279, "in_stock": true},
+          {"days_ago": 2, "price": 269, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-GPU-8G", "history": [
+          {"days_ago": 50, "price": 299, "in_stock": true},
+          {"days_ago": 9, "price": 289, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "gpu", "brand": "TestBrand", "name": "Test Graphics Card 16GB",
+      "specs": {"chip": "Test Chip 16", "chip_maker": "amd", "vram_gb": 16, "tdp_w": 260, "score": 52},
+      "offers": [
+        {"store": "test-store-b", "sku": "B-GPU-16G", "old_price": 699, "history": [
+          {"days_ago": 40, "price": 699, "in_stock": true},
+          {"days_ago": 6, "price": 649, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-GPU-16G", "history": [
+          {"days_ago": 40, "price": 689, "in_stock": true},
+          {"days_ago": 10, "price": 689, "in_stock": false}]}
+      ]
+    },
+    {
+      "category": "motherboard", "brand": "TestBrand", "name": "Test Motherboard AM5 DDR5 (Micro-ATX)",
+      "specs": {"socket": "AM5", "chipset": "B650", "memory_type": "DDR5", "form_factor": "Micro-ATX", "wifi": true},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-MB-AM5", "history": [
+          {"days_ago": 30, "price": 115, "in_stock": true},
+          {"days_ago": 8, "price": 105, "in_stock": true}]},
+        {"store": "test-store-b", "sku": "B-MB-AM5", "history": [
+          {"days_ago": 30, "price": 109, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "motherboard", "brand": "TestBrand", "name": "Test Motherboard LGA1700 DDR4 (Micro-ATX)",
+      "specs": {"socket": "LGA1700", "chipset": "B760", "memory_type": "DDR4", "form_factor": "Micro-ATX", "wifi": false},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-MB-1700", "history": [
+          {"days_ago": 30, "price": 89, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "ram", "brand": "TestBrand", "name": "Test Memory 32GB (2x16GB) DDR5-6000",
+      "specs": {"memory_type": "DDR5", "capacity_gb": 32, "modules": 2, "module_gb": 16, "speed_mhz": 6000, "cas_latency": 30, "rgb": false},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-RAM-D5", "history": [
+          {"days_ago": 35, "price": 99, "in_stock": true},
+          {"days_ago": 12, "price": 95, "in_stock": true}]},
+        {"store": "test-store-b", "sku": "B-RAM-D5", "history": [
+          {"days_ago": 35, "price": 99, "in_stock": true},
+          {"days_ago": 2, "price": 89, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "ram", "brand": "TestBrand", "name": "Test Memory 16GB (2x8GB) DDR4-3200",
+      "specs": {"memory_type": "DDR4", "capacity_gb": 16, "modules": 2, "module_gb": 8, "speed_mhz": 3200, "cas_latency": 16, "rgb": false},
+      "offers": [
+        {"store": "test-store-b", "sku": "B-RAM-D4", "history": [
+          {"days_ago": 35, "price": 42, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "storage", "brand": "TestBrand", "name": "Test NVMe SSD 1TB",
+      "specs": {"storage_type": "NVMe SSD", "capacity_gb": 1000, "pcie_gen": 4},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-SSD-1T", "history": [
+          {"days_ago": 60, "price": 72, "in_stock": true},
+          {"days_ago": 15, "price": 65, "in_stock": true}]},
+        {"store": "test-store-b", "sku": "B-SSD-1T", "old_price": 69, "history": [
+          {"days_ago": 60, "price": 62, "in_stock": true},
+          {"days_ago": 20, "price": 69, "in_stock": true},
+          {"days_ago": 5, "price": 59, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-SSD-1T", "history": [
+          {"days_ago": 60, "price": 62, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "psu", "brand": "TestBrand", "name": "Test Power Supply 750W 80+ Gold",
+      "specs": {"wattage": 750, "efficiency": "80+ Gold", "modular": "Full", "form_factor": "ATX"},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-PSU-750", "history": [
+          {"days_ago": 25, "price": 85, "in_stock": true},
+          {"days_ago": 4, "price": 79, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-PSU-750", "history": [
+          {"days_ago": 25, "price": 69, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "case", "brand": "TestBrand", "name": "Test Mid-Tower Case (ATX)",
+      "specs": {"form_factor": "Mid Tower", "supports": ["ATX", "Micro-ATX", "Mini-ITX"], "glass": true, "color": "Black"},
+      "offers": [
+        {"store": "test-store-b", "sku": "B-CASE-MT", "history": [
+          {"days_ago": 40, "price": 59, "in_stock": true},
+          {"days_ago": 13, "price": 55, "in_stock": true}]},
+        {"store": "test-store-c", "sku": "C-CASE-MT", "history": [
+          {"days_ago": 40, "price": 49, "in_stock": true}]}
+      ]
+    },
+    {
+      "category": "cooler", "brand": "TestBrand", "name": "Test CPU Air Cooler 120mm",
+      "specs": {"cooler_type": "Air", "tdp_rating_w": 220, "color": "Black"},
+      "offers": [
+        {"store": "test-store-a", "sku": "A-COOL-120", "history": [
+          {"days_ago": 20, "price": 22, "in_stock": true}]}
+      ]
+    }
+  ]
+}
