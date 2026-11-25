@@ -1,0 +1,61 @@
+# Partify - the whole website with one command:
+#     cp .env.example .env      (then edit it)
+#     docker compose up --build
+# Website:    http://localhost:8080
+# API docs:   http://localhost:8000/docs
+#
+# Three services = the three tiers:
+#   frontend (React, served by nginx)  ->  api (FastAPI)  ->  db (PostgreSQL)
+
+services:
+  # 1) The database. Its data is kept in the "pgdata" volume, so it survives restarts.
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: partify
+      POSTGRES_PASSWORD: partify
+      POSTGRES_DB: partify
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Lets pgAdmin / DBeaver on THIS computer look inside: localhost, port 5433, user/password partify.
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U partify"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # 2) The back-end (FastAPI). On start it creates/updates the tables and fills an empty
+  #    database with the product catalog, the admin account and (optionally) demo users.
+  api:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://partify:partify@db:5432/partify
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
+    command: >
+      sh -c "python -m app.cli init &&
+             python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*'"
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+
+  # 3) The front-end: the React app, served by nginx, which also forwards /api and /uploads to the back-end.
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:
