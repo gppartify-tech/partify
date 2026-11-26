@@ -96,6 +96,32 @@ Admin account: the `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` (the admin page 
 Demo accounts (when `SEED_DEMO_USERS=true`): `sami`, `lina`, `omar` – password `demo12345`.
 Turn this off on any public server.
 
+## Live updates: GitHub → running website
+
+To have the website update itself whenever new code is pushed to GitHub, start it with one command
+instead of `docker compose up`:
+
+```bash
+git clone https://github.com/gppartify-tech/partify.git && cd partify    # once
+bash scripts/live.sh                                                      # Git Bash / Linux / macOS
+```
+
+```
+push to GitHub ──► scripts/auto-pull.sh (checks every 15 s, git pull)
+                        └─► docker compose --watch applies the changed files
+                              Python code   → copied into the container + API restart   (seconds)
+                              React code    → frontend image rebuilt                    (~30 s)
+                              requirements  → backend image rebuilt                     (~1-2 min)
+```
+
+Database migrations (Alembic) run automatically each time the API restarts. Keep the terminal open;
+Ctrl+C stops both the updater and the website. If you edit files in that folder yourself, `git pull`
+may refuse to fast-forward - commit or discard your edits first. Changes to the test data file only
+load into an *empty* database (see above).
+
+> This deploys *whatever is on `main`*. Run `pytest` before pushing, and never point the updater at a
+> repository other people can push to.
+
 ## Local development (without Docker)
 
 You need Python 3.12+, Node 20+ and PostgreSQL 16 (or just `docker compose up db` for the database).
@@ -348,5 +374,6 @@ frontend/
                          Marketplace, ListingPage, ListingForm, Profile, Settings, Auth, Admin
   src/components/        Layout, ProductCard, PriceHistoryChart, WishlistButton, ui
   src/lib/               api client, auth, formatting, builder state, theme
+scripts/                 live.sh, auto-pull.sh (optional: keep the running site in sync with GitHub)
 docker-compose.yml       db (PostgreSQL), api (FastAPI), frontend (nginx + React)
 ```
