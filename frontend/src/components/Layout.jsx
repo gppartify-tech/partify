@@ -5,10 +5,9 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { CATEGORIES, timeAgo } from "../lib/format";
+import { CATEGORIES } from "../lib/format";
 import { useTheme } from "../lib/theme";
-import { useApi } from "../lib/useApi";
-import { Avatar, PageLoader, StoreBadge } from "./ui";
+import { Avatar, PageLoader } from "./ui";
 
 const NAV = [
   { to: "/parts/gpu", label: "Parts", match: "/parts" },
@@ -228,39 +227,16 @@ function CategoryBar() {
 }
 
 function Footer() {
-  const { data: stores } = useApi("/stores");
   return (
     <footer className="mt-16 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-      <div className="container-page grid gap-8 py-10 md:grid-cols-3">
-        <div>
-          <div className="flex items-center gap-2 font-extrabold">
-            <Radar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Partify
-          </div>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            Compare PC part prices across Jordanian stores, get alerts when prices drop, plan your build with the PC
-            builder and trade used parts with other builders.
-          </p>
+      <div className="container-page py-10">
+        <div className="flex items-center gap-2 font-extrabold">
+          <Radar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Partify
         </div>
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Stores we track</h3>
-          <ul className="mt-3 space-y-2">
-            {(stores || []).map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 text-sm">
-                <a href={s.base_url} target="_blank" rel="noreferrer" className="hover:underline">
-                  <StoreBadge store={s} />
-                </a>
-                <span className="text-xs text-slate-400">updated {timeAgo(s.prices_updated_at)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-50">About the data</h3>
-          <p className="mt-3">
-            This demo runs on hand-written test data: the stores, parts and prices are made up and are not real store
-            listings. They are kept in our database, with the date each store's prices were last updated.
-          </p>
-        </div>
+        <p className="mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+          Compare PC part prices across Jordanian stores, get alerts when prices drop, plan your build with the PC
+          builder and trade used parts with other builders.
+        </p>
       </div>
       <div className="border-t border-slate-100 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
         Partify · Graduation project · Prices in Jordanian Dinar (JOD)

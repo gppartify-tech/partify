@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ArrowRight, BadgePercent, Bell, Radar, Search, ShoppingBag, Sparkles, Wrench } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
-import { ProductImage, StoreBadge } from "../components/ui";
-import { CATEGORIES, CONDITIONS, formatPrice, timeAgo, timeAgoShort } from "../lib/format";
+import { ProductImage } from "../components/ui";
+import { CATEGORIES, CONDITIONS, formatPrice } from "../lib/format";
 import { useApi } from "../lib/useApi";
 
 const QUICK = ["Processor", "Graphics Card", "Motherboard", "DDR5", "NVMe 1TB", "Power Supply"];
@@ -18,9 +18,6 @@ function Hero() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const { data: stores } = useApi("/stores");
-  const { data: cats } = useApi("/categories");
-  const tracked = (cats || []).reduce((n, c) => n + c.product_count, 0);
-  const lastUpdate = (stores || []).map((s) => s.prices_updated_at).filter(Boolean).sort().pop();
   // "Comparing A, B & C" - built from the stores in the database, so it is always accurate
   const names = (stores || []).map((s) => s.name);
   const storeList = names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0];
@@ -65,20 +62,6 @@ function Hero() {
               </Link>
             ))}
           </div>
-          <dl className="mt-10 grid max-w-xl grid-cols-3 gap-6">
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-400">Parts tracked</dt>
-              <dd className="mt-1 text-2xl font-bold">{tracked ? tracked.toLocaleString() : "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-400">Stores</dt>
-              <dd className="mt-1 text-2xl font-bold">{stores?.length ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-400">Last update</dt>
-              <dd className="mt-1 text-2xl font-bold">{lastUpdate ? timeAgoShort(lastUpdate) : "—"}</dd>
-            </div>
-          </dl>
         </div>
       </div>
     </section>
@@ -228,25 +211,6 @@ function LatestListings() {
   );
 }
 
-function StoresStrip() {
-  const { data } = useApi("/stores");
-  return (
-    <section className="container-page mt-14">
-      <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-slate-600 dark:text-slate-300">Prices in our database come from:</div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2">
-          {(data || []).map((s) => (
-            <div key={s.id} className="flex items-center gap-2">
-              <StoreBadge store={s} className="font-semibold" />
-              <span className="text-xs text-slate-400">{timeAgo(s.prices_updated_at)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function Home() {
   return (
     <>
@@ -256,7 +220,6 @@ export default function Home() {
       <BuildPresets />
       <Features />
       <LatestListings />
-      <StoresStrip />
     </>
   );
 }
